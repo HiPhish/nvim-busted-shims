@@ -70,64 +70,6 @@ patches are welcome.
    Do not add this directory to your `PATH`.  The shims rely on the `PATH` to
    find the actual executables.
 
-What follows is a more in-depth look at the individual shims and a few tricks
-of the trade.
-
-
-The shims
-=========
-
-There are three shims:
-
-- `busted` calls Luarocks to temporarily set up the `PATH` to find the real
-  busted executable
-- `lua` is the most complex shim, it invokes Neovim set up to act as a Lua
-  interpreter
-- `nvim` invokes Neovim isolated from your personal configuration
-
-
-busted
-------
-
-This is the main shim, it depends on Luarocks and busted.  The `luarocks`
-executable must be in your `PATH`.  It calls Luarocks to adjust the `PATH` to
-include Lua 5.1 executables, then passes all its arguments to the real busted
-command.
-
-This shim is mostly meant for automated tooling which can only take a path to
-one executable file, such as neotest-busted_.
-
-lua
----
-
-If your test depends on Neovim's Lua API you have to instruct busted to use
-Neovim as your Lua interpreter.  Neovim has the `-l` flag (see `:h -l`) which
-makes Neovim act as an interpreter for Lua scripts.  However, busted expects
-the interpreter to have the same command-line interface as the standalone Lua
-interpreter.  This shim acts as an adapter that translates between the two
-interfaces.
-
-Busted will not pick up the Lua shim on its own, you have to instruct it which
-Lua executable to use.  You can add something like this to your `.busted` file:
-
-.. code:: lua
-
-   return {
-	   _all = {
-		   lua = './test/bin/lua',
-	   },
-   }
-
-
-nvim
-----
-
-This shim exists for convenience only.  If you want to manually try out your
-plugin in the isolated Neovim you can call this shim.  All it does is set up
-the XDG environment variables and then pass on all command-line arguments to
-Neovim.
-
-
 Adding your plugin to the isolated Neovim
 =========================================
 
@@ -149,19 +91,77 @@ If you prefer Lua add this to `test/xdg/config/nvim/init.lua` instead:
    vim.opt.runtimepath:append(vim.fn.getcwd())
 
 
+The shims
+#########
+
+There are three shims:
+
+- `busted` calls Luarocks to temporarily set up the `PATH` to find the real
+  busted executable
+- `lua` is the most complex shim, it invokes Neovim set up to act as a Lua
+  interpreter
+- `nvim` invokes Neovim isolated from your personal configuration
+
+
+busted
+======
+
+This is the main shim, it depends on Luarocks and busted.  The `luarocks`
+executable must be in your `PATH`.  It calls Luarocks to adjust the `PATH` to
+include Lua 5.1 executables, then passes all its arguments to the real busted
+command.
+
+This shim is mostly meant for automated tooling which can only take a path to
+one executable file, such as neotest-busted_.
+
+lua
+===
+
+If your test depends on Neovim's Lua API you have to instruct busted to use
+Neovim as your Lua interpreter.  Neovim has the `-l` flag (see `:h -l`) which
+makes Neovim act as an interpreter for Lua scripts.  However, busted expects
+the interpreter to have the same command-line interface as the standalone Lua
+interpreter.  This shim acts as an adapter that translates between the two
+interfaces.
+
+Busted will not pick up the Lua shim on its own, you have to instruct it which
+Lua executable to use.  You can add something like this to your `.busted` file:
+
+.. code:: lua
+
+   return {
+	   _all = {
+		   lua = './test/bin/lua',
+	   },
+   }
+
+
+nvim
+====
+
+This shim exists for convenience only.  If you want to manually try out your
+plugin in the isolated Neovim you can call this shim.  All it does is set up
+the XDG environment variables and then pass on all command-line arguments to
+Neovim.
+
+
 
 Recipes
-=======
+#######
+
+The following section contains my personal collections of tricks of the trade.
+If you have any of your to add you are welcome to contribute.
+
 
 Configure the isolated Neovim
------------------------------
+=============================
 
 If you need some initial configuration for your plugin in the isolated
 environment you can add it to `test/xdg/config/nvim` like any other
 configuration.
 
 Managing dependencies
----------------------
+=====================
 
 If your plugin depends on some other plugin you will need to add that other
 plugin to the isolated environment.  I like to use Git submodules for that.
@@ -184,7 +184,7 @@ want to updated the dependency you can execute this command:
 See `git-submodule(1)` for information on Git submodules.
 
 Embedded Neovim inside tests
-----------------------------
+============================
 
 For some complex tests you might have to run an embedded Neovim process from
 within your test and remotely control it through the RPC API (see `:h api`).
@@ -223,7 +223,7 @@ and a method: the name of the method is the name of the function minus the
 For more information pleas refer to the yo-dawg.nvim documentation.
 
 Add your own assertions
------------------------
+=======================
 
 You can add your own busted configurations by adding them to the isolated
 Neovim configuration.  The `init.lua` file is a good place, but personally I
@@ -284,25 +284,24 @@ more concise and readable.
 
     it('recognizes the file type', function()
         nvim:command('edit some_file.vim')
-        assert.nvim(nvim).has_filetype('lua')
+        assert.nvim(nvim).has_filetype('vim')
     end)
 
 Refer to the busted documentation for details on how to write custom modifiers
 and assertions.
 
 
-
 Further reading
-===============
+###############
 
 Articles and blog posts
------------------------
+=======================
 
 - `Testing Neovim plugins with Busted <https://hiphish.github.io/blog/2024/01/29/testing-neovim-plugins-with-busted/>`__
 - `Using Neovim as Lua interpreter with Luarocks <https://zignar.net/2023/01/21/using-luarocks-as-lua-interpreter-with-luarocks/>`__
 
 Similar projects
-----------------
+================
 
 nlua_
    Another command-line interpreter adapter, but written in Lua instead.
