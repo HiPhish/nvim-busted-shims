@@ -4,6 +4,12 @@
  Busted shims for Neovim
 #########################
 
+Minimal command-line adapters to facilitate writing Neovim plugins tests using
+the busted Lua test framework.
+
+.. contents::
+   :depth: 2
+
 
 What and why
 ############
