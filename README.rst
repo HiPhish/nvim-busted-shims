@@ -91,6 +91,163 @@ If you prefer Lua add this to `test/xdg/config/nvim/init.lua` instead:
    vim.opt.runtimepath:append(vim.fn.getcwd())
 
 
+Tutorial: Our first test
+########################
+
+Let's write a simple test for a toy plugin.  Our plugin will provide a command
+which sets a variable to a random number.  Pretty useless, but simple enough to
+demonstrate how to write tests with these shims.  First we create a new
+directory with a plugin file.
+
+.. code:: sh
+
+   mkdir set-secret-var.nvim
+   cd set-secret-var.nvim
+   mkdir plugin
+   touch plugin/set-secret-var.vim
+
+The plugin file is very simple as well:
+
+.. code:: vim
+
+   " File: plugin/set/secret-var.vim
+   command! SetSecretVar let g:secret = rand()
+
+This plugin is written in Vim script, so we cannot run it directly in a Lua
+interpreter.  Furthermore, it only acts through side effects, so it can only be
+used from within Neovim.  Now we need to add the shims:
+
+.. code:: sh
+
+   git submodule add https://gitlab.com/HiPhish/nvim-busted-shims.git test/bin
+
+I have chosen `test/bin` for the shims, but any directory will work.  Busted
+encourages putting your tests next to your Lua modules, but there are no Lua
+modules here.  Even if this plugin file was written in Lua, it would not be a
+Lua module because it is not meant to be required by other modules.  I will
+therefore put my test in a separate directory.
+
+.. code:: sh
+
+   mkdir test/spec
+   touch test/spec/secret.lua
+   touch .busted
+
+First we need to instruct busted to use our shims and to find our tests.  Add
+this to your `.busted` file:
+
+.. code:: lua
+
+   -- File: .busted
+   return {
+	   _all = {
+		   lua = './test/bin/lua',
+		   ROOT = {'./test/spec/'},
+		   pattern = '',
+	   }
+   }
+
+At this point we can take busted for a spin.
+
+.. code:: lua
+
+   ./test/bin/busted
+
+Of course busted will not find any tests because we have not yet defined
+anything.  Let's add a trivial test.
+
+.. code:: lua
+
+   -- File: test/spec/secret.lua
+   it('always succeeds', function()
+       assert.is_true(true)
+   end)
+
+You should get one passing test.  Let's go ahead and define a proper test now.
+
+.. code:: lua
+
+   describe('The secret', function()
+       local nvim
+
+       before_each(function()
+           local command = {'nvim', '--embed', '--headless'}
+           local jobopts = {rpc = true}
+           nvim = vim.fn.jobstart(command, jobopts)
+       end)
+
+       after_each(function()
+           vim.rpcnotify(nvim, 'nvim_command', 'quitall!')
+           vim.fn.jobwait({nvim})
+       end)
+
+       it('is set', function()
+           vim.rpcrequest(nvim, 'nvim_command', 'SetSecretVar')
+           local secret = vim.rpcrequest(nvim, 'nvim_get_var', 'secret')
+           assert.is_number(secret)
+       end)
+   end)
+
+In case you are wondering why we can just write `nvim` in our test instead of
+having to reference the shim: the shim exports the XDG environment variables,
+so any descendant Neovim process will also run in the isolated environment.  It
+just works.
+
+If you run this test you will get an error.  The shim cannot find our new
+command because the plugin is not part of the isolated environment.  Let's add
+it.  The configuration directory of the isolated environment is
+`test/xdg/config/nvim` and it works the same way as the original configuration
+directory.  Create the config file `test/xdg/config/nvim/init.vim` with the
+following content:
+
+.. code:: vim
+
+   " File: test/xdg/config/nvim/init.vim
+   execute 'set rtp+=' .. getcwd()
+
+Now the test will pass.  But just look at how much of a mouthful it is to get
+an embedded Neovim running.  I use the plugin yo-dawg.nvim_ to get rid of all
+this boilerplate code.  You do not have to use it, anything else that cuts own
+on the boilerplate will work just as well.  This is simply what I use.  Let's
+add yo-dawg as a submodule.
+
+.. code:: sh
+
+   git submodule add \
+       https://gitlab.com/HiPhish/yo-dawg.nvim.git \
+       test/xdg/local/share/nvim/site/pack/testing/start/yo-dawg.nvim
+
+Note that I cloned to submodule into a Neovim standard directory for plugins
+(see `:h packages`).  That way Neovim can find it without needing any plugin
+manager.  Now we can update our test.
+
+.. code:: lua
+
+   -- File: test/spec/secret.lua
+   local yd = require 'yo-dawg'
+
+   describe('The scret', function()
+       local nvim
+       before_each(function() nvim = yd.start() end)
+       after_each(function() yd.stop(nvim) end)
+
+       it('is set', function()
+           nvim:command 'SetSecretVar'
+           local secret = nvim:get_var('secret')
+           assert.is_number(secret)
+       end)
+   end)
+
+With this we have reached the end of the tutorial.  To recapitulate, we have
+performed the following steps:
+
+- Add shims as as submodule to the plugin
+- Add test configuration for the shims to find the plugin
+- Set up busted to use the shims and find our tests
+- Write the tests
+- Run the tests through the busted shim
+
+
 The shims
 #########
 
