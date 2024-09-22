@@ -116,7 +116,7 @@ The plugin file is very simple as well:
 
 .. code:: vim
 
-   " File: plugin/set/secret-var.vim
+   " File: plugin/set-secret-var.vim
    command! SetSecretVar let g:secret = rand()
 
 This plugin is written in Vim script, so we cannot run it directly in a Lua
