@@ -135,7 +135,7 @@ therefore put my test in a separate directory.
 
 .. code:: sh
 
-   mkdir test/spec
+   mkdir -p test/spec
    touch test/spec/secret.lua
    touch .busted
 
