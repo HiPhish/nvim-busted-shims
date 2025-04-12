@@ -486,9 +486,10 @@ mini.test_
 License
 #######
 
-All code is released under the terms of the Unlicense.  See the LICENSE_ file
-for details.  I don't know if something this simple even needs a license, but
-here you have one just in case.
+All source code is released under the terms of the Unlicense, the documentation
+is under the CC0-1.0 license.  See the files in the LICENSE_ directory for
+details.  I don't know if something this simple even needs a license, but here
+you have one just in case.
 
 
 .. _Neovim: https://neovim.io/
