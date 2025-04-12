@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: © 2024 Alejandro "HiPhish" Sanchez
 # SPDX-License-Identifier: Unlicense
 
 # This is free and unencumbered software released into the public domain.

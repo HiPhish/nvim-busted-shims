@@ -1,3 +1,6 @@
+.. SPDX-FileCopyrightText: © 2024 Alejandro "HiPhish" Sanchez
+.. SPDX-License-Identifier: CC0-1.0
+
 .. default-role:: code
 
 #########################
